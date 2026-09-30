@@ -1,2 +1,3 @@
-# macelimiter-console
-MaceLimiter selection-based remote console web UI
+# MaceLimiter Remote Console
+
+Selection-based remote Minecraft console with authenticated sessions and mace-location tracking.
