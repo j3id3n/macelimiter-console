@@ -15,7 +15,7 @@
 <section class="card"><b>Mace Tracking</b><div class="stats"><div class="stat">Total<div id="count" class="num">—</div></div><div class="stat">Storage<div id="storage" class="num">—</div></div><div class="stat">Ground<div id="ground" class="num">—</div></div></div><h3>Locations</h3><div id="locations"></div></section>
 </div></div></main></div>
 <script>
-const D='https://ntfy.sh/macelimiter-discovery-v3';
+const DS=["https://ntfy.sh/macelimiter-discovery-v3", "https://ntfy.tedomum.fr/macelimiter-discovery-v3", "https://ntfy.jae.fi/macelimiter-discovery-v3", "https://ntfy.adminforge.de/macelimiter-discovery-v3", "https://ntfy.envs.net/macelimiter-discovery-v3"];
 const S=new Map();let sel=null,es=null,authed=false,sess='';
 const $=id=>document.getElementById(id);
 function b(s){try{let x=s.replace(/-/g,'+').replace(/_/g,'/');x+='='.repeat((4-x.length%4)%4);return decodeURIComponent(escape(atob(x)))}catch(e){return s||''}}
@@ -35,6 +35,39 @@ if(m.startsWith('MACE|'+sess+'|')){draw(b(m.split('|')[2]||''));return}
 }
 function draw(raw){let rows=raw.split(';').filter(Boolean).map(x=>{let p=x.split('~');return{id:p[0],k:p[1],o:p[2],w:p[3],x:p[4],y:p[5],z:p[6],path:p[7]||''}});let storage=rows.filter(r=>r.k==='STORAGE'),ground=rows.filter(r=>r.k==='GROUND');$('storage').textContent=storage.length;$('ground').textContent=ground.length;$('locations').innerHTML=rows.map(r=>'<div class="loc"><span class="pill">'+esc(r.k)+'</span><span><b>'+esc(r.o)+'</b><div class="muted">'+esc(r.path)+'</div></span><span class="coord">'+esc(r.w)+': '+r.x+', '+r.y+', '+r.z+'</span></div>').join('')||'<div class="muted">No maces detected.</div>'}
 $('connect').onclick=connect;$('send').onclick=()=>{const c=$('command').value.trim();if(authed&&c){pub(sel.topic,'CMD|'+sess+'|'+c);$('command').value=''}};
-async function discover(){try{const r=await fetch(D+'/json?poll=1&since=all&t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const text=await r.text();for(const line of text.split(/\r?\n/)){if(!line)continue;try{const j=JSON.parse(line);if(j.event!=='message')continue;const p=j.message.split('|');if(p[0]!=='DISCOVER'||p.length<6)continue;const id=p[1];S.set(id,{id,name:b(p[2]),version:p[3],topic:b(p[4]),online:p[5]==='ONLINE',last:Date.now()})}catch{}}const now=Date.now();for(const [id,s] of S){s.online=now-s.last<45000;if(!s.online&&sel?.id===id)$('online').textContent='OFFLINE'}$('discoveryStatus').innerHTML='<span class="ok">Discovery connected</span>';render()}catch(e){$('discoveryStatus').innerHTML='<span class="err">Discovery unavailable — retrying</span>'}}
+async function discover(){
+  try{
+    const now=Date.now();
+    const results=await Promise.all(DS.map(async d=>{
+      try{
+        const r=await fetch(d+'/json?poll=1&since=all&t='+now,{cache:'no-store'});
+        if(!r.ok) return '';
+        return await r.text();
+      }catch(e){return ''}
+    }));
+    for(const text of results){
+      for(const line of text.split(/\r?\n/)){
+        if(!line) continue;
+        try{
+          const j=JSON.parse(line);
+          if(j.event!=='message') continue;
+          if(j.time && now-(Number(j.time)*1000)>60000) continue;
+          const p=j.message.split('|');
+          if(p[0]!=='DISCOVER'||p.length<6) continue;
+          const id=p[1];
+          S.set(id,{id,name:b(p[2]),version:p[3],topic:b(p[4]),online:p[5]==='ONLINE',last:now});
+        }catch(e){}
+      }
+    }
+    for(const [id,s] of S){
+      s.online=now-s.last<45000;
+      if(!s.online&&sel?.id===id) $('online').textContent='OFFLINE';
+    }
+    $('discoveryStatus').innerHTML='<span class="ok">Discovery connected</span>';
+    render();
+  }catch(e){
+    $('discoveryStatus').innerHTML='<span class="err">Discovery unavailable — retrying</span>';
+  }
+}
 discover();setInterval(discover,5000);
 </script></body></html>
