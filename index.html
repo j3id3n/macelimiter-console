@@ -15,7 +15,7 @@
 <section class="card"><b>Mace Tracking</b><div class="stats"><div class="stat">Total<div id="count" class="num">—</div></div><div class="stat">Storage<div id="storage" class="num">—</div></div><div class="stat">Ground<div id="ground" class="num">—</div></div></div><h3>Locations</h3><div id="locations"></div></section>
 </div></div></main></div>
 <script>
-const DS=["https://ntfy.sh/macelimiter-discovery-v3", "https://ntfy.tedomum.fr/macelimiter-discovery-v3", "https://ntfy.jae.fi/macelimiter-discovery-v3", "https://ntfy.adminforge.de/macelimiter-discovery-v3", "https://ntfy.envs.net/macelimiter-discovery-v3"];
+const DS=["https://ntfy.jae.fi/macelimiter-discovery-v4", "https://ntfy.tedomum.fr/macelimiter-discovery-v3", "https://ntfy.jae.fi/macelimiter-discovery-v3", "https://ntfy.adminforge.de/macelimiter-discovery-v3", "https://ntfy.envs.net/macelimiter-discovery-v3"];
 const S=new Map();let sel=null,es=null,authed=false,sess='';
 const $=id=>document.getElementById(id);
 function b(s){try{let x=s.replace(/-/g,'+').replace(/_/g,'/');x+='='.repeat((4-x.length%4)%4);return decodeURIComponent(escape(atob(x)))}catch(e){return s||''}}
